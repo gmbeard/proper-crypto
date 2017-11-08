@@ -1,7 +1,7 @@
 mod rot13;
 mod transform;
 mod source;
-mod native;
+pub mod native;
 
 pub use transform::{Transform, TransformInPlace};
 pub use rot13::Rot13;

@@ -127,9 +127,9 @@ fn encrypt(data: &[u8]) -> Result<Vec<u8>, EncryptionError> {
     crypt_with::<CryptOp<Encrypt>>(data)
 }
 
+/// Platform native encryption
 pub struct NativeEncrypt;
 
-/// Platform native encryption
 impl NativeEncrypt {
     pub fn new() -> NativeEncrypt {
         NativeEncrypt
