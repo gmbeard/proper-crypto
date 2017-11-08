@@ -1,9 +1,12 @@
 mod rot13;
 mod transform;
 mod source;
+mod native;
 
 pub use transform::{Transform, TransformInPlace};
 pub use rot13::Rot13;
+#[cfg(target_os = "windows")]
+pub use native::{NativeEncrypt, NativeDecrypt};
 pub use source::{Source, SourceMut};
 
 /// Transforms `data` using `T`. You would typically require this function
@@ -12,11 +15,16 @@ pub use source::{Source, SourceMut};
 ///
 /// # Examples
 /// ```
-/// use proper_crypto::{transform, Rot13};
+/// if cfg!(windows) {
+///     use proper_crypto::{transform, NativeEncrypt};
+///     assert!(transform("Uryyb, Jbeyq!".as_bytes(), NativeEncrypt::new()).is_ok());
+/// }
+/// else {
+///     use proper_crypto::{transform, Rot13};
+///     let result = transform("Uryyb, Jbeyq!".as_bytes(), Rot13::new());
 ///
-/// let result = transform("Uryyb, Jbeyq!".as_bytes(), Rot13::new());
-///
-/// assert_eq!(Ok("Hello, World!".as_bytes()), result.as_ref().map(|b| &**b));
+///     assert_eq!(Ok("Hello, World!".as_bytes()), result.as_ref().map(|b| &**b));
+/// }
 /// ```
 pub fn transform<D, T>(data: D, mut t: T) -> Result<T::Item, T::Error>
     where D: AsRef<[u8]>,
