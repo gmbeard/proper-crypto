@@ -2,12 +2,16 @@ mod rot13;
 mod transform;
 mod source;
 pub mod native;
+mod base64;
 
 pub use transform::{Transform, TransformInPlace};
 pub use rot13::Rot13;
 #[cfg(target_os = "windows")]
 pub use native::{NativeEncrypt, NativeDecrypt};
 pub use source::{Source, SourceMut};
+
+#[cfg(target_os = "windows")]
+pub use base64::{FromBase64, ToBase64};
 
 /// Transforms `data` using `T`. You would typically require this function
 /// if `T` must allocate space to provide the result (E.g. platform native
@@ -31,6 +35,23 @@ pub fn transform<D, T>(data: D, mut t: T) -> Result<T::Item, T::Error>
           T: Transform
 {
     t.transform(data.as_ref())
+}
+
+/// Transforms `data` in the same way as `transform`, but uses an
+/// implementation of `Source`.
+///
+/// # Examples
+/// ```
+/// use proper_crypto::{transform_source, Rot13};
+/// // `&[u8]` implements `Source`
+/// assert!(transform_source(b"Uryyb, Jbeyq!".as_ref(), Rot13::new()).is_ok());
+/// ```
+pub fn transform_source<S, T>(mut src: S, t: T) -> Result<T::Item, S::Error>
+    where S: Source<Data=[u8]>,
+          T: Transform,
+          S::Error: From<T::Error>
+{
+    Ok(transform(src.read()?, t)?)
 }
 
 /// Transforms `data` using `T`. Use this function if the transformation 
