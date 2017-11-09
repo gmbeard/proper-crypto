@@ -1,6 +1,7 @@
 mod rot13;
 mod transform;
 mod source;
+#[cfg(target_os = "windows")]
 pub mod native;
 mod base64;
 
