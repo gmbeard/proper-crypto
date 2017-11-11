@@ -1,3 +1,4 @@
+use std::io;
 use transform::Transform;
 
 /// A wrapper around a `T` that implements `Transform`. This type
@@ -29,7 +30,7 @@ extern "system" {
     ) -> bool;
 }
 
-fn to_base64(data: &[u8]) -> Vec<u8> {
+fn to_base64(data: &[u8]) -> Result<Vec<u8>, io::Error> {
     let mut buffer = Vec::with_capacity(data.len() * 2);
     let mut required_len = buffer.capacity() as u32;
     let result = unsafe {
@@ -43,14 +44,14 @@ fn to_base64(data: &[u8]) -> Vec<u8> {
     };
 
     if !result {
-        panic!("CryptBinaryToStringA didn't return true");
+        return Err(io::Error::last_os_error());
     }
 
     unsafe { buffer.set_len(required_len as usize) };
-    buffer
+    Ok(buffer)
 }
 
-fn from_base64(data: &[u8]) -> Vec<u8> {
+fn from_base64(data: &[u8]) -> Result<Vec<u8>, io::Error> {
     let mut buffer = Vec::with_capacity(data.len());
     let mut output_len = buffer.capacity() as u32;
 
@@ -67,12 +68,12 @@ fn from_base64(data: &[u8]) -> Vec<u8> {
     };
 
     if !result {
-        panic!("CryptStringToBinaryA didn't return true");
+        return Err(io::Error::last_os_error());
     }
 
     unsafe { buffer.set_len(output_len as usize) };
 
-    buffer
+    Ok(buffer)
 }
 
 impl<T> ToBase64<T> {
@@ -89,27 +90,26 @@ impl<T> FromBase64<T> {
 
 impl<T> Transform for ToBase64<T> 
     where T: Transform,
-          T::Item: IntoIterator<Item=u8>
+          T::Item: AsRef<[u8]>,
+          T::Error: From<io::Error>
 {
     type Item = Vec<u8>;
     type Error = T::Error;
 
     fn transform(&mut self, data: &[u8]) -> Result<Self::Item, Self::Error> {
-        let inner = self.0.transform(data)?
-                          .into_iter()
-                          .collect::<Vec<_>>();
-        Ok(to_base64(&*inner))
+        Ok(to_base64(self.0.transform(data)?.as_ref())?)
     }
 }
 
 impl<T> Transform for FromBase64<T>
-    where T: Transform
+    where T: Transform,
+          T::Error: From<io::Error>
 {
     type Item = T::Item;
     type Error = T::Error;
 
     fn transform(&mut self, data: &[u8]) -> Result<Self::Item, Self::Error> {
-        self.0.transform(&*from_base64(data))
+        self.0.transform(&*from_base64(data)?)
     }
 }
 
@@ -119,13 +119,13 @@ mod to_base64_should {
 
     #[test]
     fn convert_to_correct_base64() {
-        let result = to_base64("Hello, World!".as_bytes());
+        let result = to_base64("Hello, World!".as_bytes()).unwrap();
         assert_eq!(b"SGVsbG8sIFdvcmxkIQ==", &*result);
     }
 
     #[test]
     fn convert_to_correct_string() {
-        let result = from_base64("SGVsbG8sIFdvcmxkIQ==".as_bytes());
+        let result = from_base64("SGVsbG8sIFdvcmxkIQ==".as_bytes()).unwrap();
         assert_eq!(b"Hello, World!", &*result);
     }
 }

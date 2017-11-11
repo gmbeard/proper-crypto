@@ -1,10 +1,6 @@
 use std::marker;
+use std::io;
 use transform::Transform;
-
-/// An error type indicating a platform native encryption /
-/// decryption transformation failure.
-#[derive(Debug)]
-pub struct EncryptionError;
 
 #[repr(C)]
 struct DataBlob {
@@ -82,7 +78,7 @@ impl Crypt for CryptOp<Decrypt> {
     }
 }
 
-fn crypt_with<O>(data: &[u8]) -> Result<Vec<u8>, EncryptionError>
+fn crypt_with<O>(data: &[u8]) -> Result<Vec<u8>, io::Error>
     where O: Crypt
 {
     use std::mem;
@@ -104,26 +100,25 @@ fn crypt_with<O>(data: &[u8]) -> Result<Vec<u8>, EncryptionError>
     let mut blob_out = unsafe { mem::uninitialized::<DataBlob>() };
 
     if !O::crypt(&blob_in, &mut blob_out) {
-        return Err(EncryptionError)
+        return Err(io::Error::last_os_error())
     }
 
     let _s = BlobScope(blob_out.data_ptr);
 
     let v = unsafe {
         let s = slice::from_raw_parts(blob_out.data_ptr, blob_out.data_size as usize);
-        let v = s.to_vec();
-        v
+        s.to_vec()
     };
 
     Ok(v)
 
 }
 
-fn decrypt(data: &[u8]) -> Result<Vec<u8>, EncryptionError> {
+fn decrypt(data: &[u8]) -> Result<Vec<u8>, io::Error> {
     crypt_with::<CryptOp<Decrypt>>(data)
 }
 
-fn encrypt(data: &[u8]) -> Result<Vec<u8>, EncryptionError> {
+fn encrypt(data: &[u8]) -> Result<Vec<u8>, io::Error> {
     crypt_with::<CryptOp<Encrypt>>(data)
 }
 
@@ -138,7 +133,7 @@ impl NativeEncrypt {
 
 impl Transform for NativeEncrypt {
     type Item = Vec<u8>;
-    type Error = EncryptionError;
+    type Error = io::Error;
 
     fn transform(&mut self, data: &[u8]) -> Result<Self::Item, Self::Error> {
         encrypt(data)
@@ -156,7 +151,7 @@ impl NativeDecrypt {
 
 impl Transform for NativeDecrypt {
     type Item = Vec<u8>;
-    type Error = EncryptionError;
+    type Error = io::Error;
 
     fn transform(&mut self, data: &[u8]) -> Result<Self::Item, Self::Error> {
         decrypt(data)

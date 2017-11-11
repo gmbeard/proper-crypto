@@ -1,9 +1,6 @@
 use std::io::{self, BufRead};
 use proper_crypto::Source;
 
-#[cfg(target_os = "windows")]
-use proper_crypto::native::EncryptionError;
-
 pub struct StdinSource(Vec<u8>);
 
 impl StdinSource {
@@ -25,13 +22,6 @@ impl From<io::Error> for StdinTransformError {
 
 impl From<()> for StdinTransformError {
     fn from(_: ()) -> StdinTransformError {
-        StdinTransformError::Transform
-    }
-}
-
-#[cfg(target_os = "windows")]
-impl From<EncryptionError> for StdinTransformError {
-    fn from(_: EncryptionError) -> StdinTransformError {
         StdinTransformError::Transform
     }
 }
