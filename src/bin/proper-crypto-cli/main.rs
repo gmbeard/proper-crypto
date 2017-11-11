@@ -9,7 +9,7 @@ use proper_crypto::{
     Rot13, 
 };
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 use proper_crypto::{
     ToBase64, 
     FromBase64,
@@ -30,7 +30,7 @@ fn transform_stdin<T>(t: T)
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 fn main() {
     let (use_native, encrypt) = (
         env::args().any(|a| a == "-n"),
@@ -44,7 +44,7 @@ fn main() {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(windows))]
 fn main() {
     transform_stdin(Rot13::new());
 }

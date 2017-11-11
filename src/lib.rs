@@ -1,17 +1,17 @@
 mod rot13;
 mod transform;
 mod source;
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 pub mod native;
 mod base64;
 
 pub use transform::{Transform, TransformInPlace};
 pub use rot13::Rot13;
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 pub use native::{NativeEncrypt, NativeDecrypt};
 pub use source::{Source, SourceMut};
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 pub use base64::{FromBase64, ToBase64};
 
 /// Transforms `data` using `T`. You would typically require this function
