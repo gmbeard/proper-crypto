@@ -3,6 +3,7 @@ mod transform;
 mod source;
 #[cfg(windows)]
 pub mod native;
+#[cfg(windows)]
 mod base64;
 
 pub use transform::{Transform, TransformInPlace};
