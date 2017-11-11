@@ -21,16 +21,19 @@ pub use base64::{FromBase64, ToBase64};
 ///
 /// # Examples
 /// ```
-/// if cfg!(windows) {
-///     use proper_crypto::{transform, NativeEncrypt};
-///     assert!(transform("Uryyb, Jbeyq!".as_bytes(), NativeEncrypt::new()).is_ok());
-/// }
-/// else {
-///     use proper_crypto::{transform, Rot13};
-///     let result = transform("Uryyb, Jbeyq!".as_bytes(), Rot13::new());
+/// # use proper_crypto::{transform, Rot13};
+/// # #[cfg(windows)]
+/// # use proper_crypto::NativeEncrypt;
+/// # #[cfg(windows)]
+/// # fn main() {
+/// assert!(transform("Uryyb, Jbeyq!".as_bytes(), NativeEncrypt::new()).is_ok());
+/// # }
+/// # #[cfg(not(windows))]
+/// # fn main() {
+/// let result = transform("Uryyb, Jbeyq!".as_bytes(), Rot13::new());
 ///
-///     assert_eq!(Ok("Hello, World!".as_bytes()), result.as_ref().map(|b| &**b));
-/// }
+/// assert_eq!(Ok("Hello, World!".as_bytes()), result.as_ref().map(|b| &**b));
+/// # }
 /// ```
 pub fn transform<D, T>(data: D, mut t: T) -> Result<T::Item, T::Error>
     where D: AsRef<[u8]>,
